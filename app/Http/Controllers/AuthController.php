@@ -48,7 +48,7 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'nip_pegawai' => $request->nip_pegawai,
-                'id_role' => '2',  // Simpan NIP ke database
+                'id_role' => '3',
             ]);
     
             // Generate token

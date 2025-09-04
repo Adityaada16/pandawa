@@ -151,7 +151,7 @@ class PetugasController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx|max:20480',
+            'file' => 'required|file|mimes:xlsx,xls|max:20480',
         ], [
             //Pesan Kesalahan
             'file.required'  => 'Silakan pilih berkas.',

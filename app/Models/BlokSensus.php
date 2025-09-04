@@ -14,6 +14,7 @@ class BlokSensus extends Model
     protected $primaryKey = 'id_bs';
 
     protected $fillable = [
+        'id_survei',
         'kode',  
         'id_kab_kota',     
         'kecamatan',
@@ -48,6 +49,11 @@ class BlokSensus extends Model
     public function petugasPml()
     {
         return $this->belongsTo(Petugas::class, 'id_petugas_pml', 'id_petugas');
+    }
+
+    public function survei()
+    {
+        return $this->belongsTo(Survei::class, 'id_survei', 'id_survei');
     }
 
     /**

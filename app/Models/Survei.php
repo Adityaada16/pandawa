@@ -29,5 +29,17 @@ class Survei extends Model
     {
         return 'id_survei';
     }
+
+    public function rumahTangga()
+    {
+        return $this->hasManyThrough(
+            RumahTangga::class, 
+            BlokSensus::class,  
+            'id_survei',                    // FK di BlokSensus -> Survei
+            'id_bs',                        // FK di RumahTangga -> BlokSensus
+            'id_survei',                    // PK di Survei
+            'id_bs'                         // PK di BlokSensus
+        );
+    }
     
 }

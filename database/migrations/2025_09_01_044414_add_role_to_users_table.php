@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('id_role')->default(2)->after('nip_pegawai'); // Tambahkan kolom id_role
+            $table->unsignedBigInteger('id_role')->default(3)->after('nip_pegawai'); // Tambahkan kolom id_role
             $table->foreign('id_role')
                   ->references('id')
                   ->on('roles')

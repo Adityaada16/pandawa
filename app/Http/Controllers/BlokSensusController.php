@@ -30,6 +30,7 @@ class BlokSensusController extends Controller
     {
         $validator = Validator::make($request->all(), [
             //validasi untuk tiap atributnya
+            'id_survei'   => ['required','integer','exists:surveis,id_survei'],
             'kode'          => ['required','string','size:4'],
             'id_kab_kota'   => ['required','exists:kab_kotas,id_kab_kota'],
             'kecamatan'     => ['required','string','max:50'],
@@ -47,6 +48,9 @@ class BlokSensusController extends Controller
                                     'different:id_petugas_pcl',],
         ], [
             // Pesan Kesalahan
+            'id_survei.required' => 'Survei wajib diisi.',
+            'id_survei.integer'  => 'Survei harus berupa ID angka.',
+            'id_survei.exists'   => 'Survei tidak ditemukan.',
             'kode.required'        => 'Kode wajib diisi.',
             'kode.size'            => 'Kode harus tepat 4 karakter.',
             'id_kab_kota.required' => 'Kab/Kota wajib diisi.',
@@ -110,6 +114,7 @@ class BlokSensusController extends Controller
        // Kalau PUT => required, kalau PATCH => sometimes
         $required = $request->isMethod('put') ? 'required' : 'sometimes';
         $validator = Validator::make($request->all(), [
+            'id_survei'   => [$required,'integer','exists:surveis,id_survei'],
             'kode'        => [$required,'string','size:4'],
             'id_kab_kota' => [$required,'integer',Rule::exists('kab_kotas','id_kab_kota')],
             'kecamatan'   => [$required,'string','max:50'], // samakan dgn ukuran kolom di DB
@@ -128,6 +133,8 @@ class BlokSensusController extends Controller
                                 'different:id_petugas_pcl',],
         ], [
             // Pesan Kesalahan
+            'id_survei.integer' => 'Survei harus berupa ID angka.',
+            'id_survei.exists'  => 'Survei tidak ditemukan.',    
             'kode.required'        => 'Kode wajib diisi.',
             'kode.size'            => 'Kode harus tepat 4 karakter.',
             'id_kab_kota.required' => 'Kab/Kota wajib diisi.',
@@ -178,7 +185,7 @@ class BlokSensusController extends Controller
     {
 
         $request->validate([
-            'file' => 'required|file|mimes:xlsx|max:20480',
+            'file' => 'required|file|mimes:xlsx,xls|max:20480',
         ], [
             //Pesan Kesalahan
             'file.required'  => 'Silakan pilih berkas.',
