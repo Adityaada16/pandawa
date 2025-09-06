@@ -18,6 +18,10 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             KabKotaSeeder::class,
             UserSeeder::class,
+            PetugasSeeder::class,
+            SurveiSeeder::class,
+            BlokSensusSeeder::class,
+            RumahTanggaSeeder::class,
         ]);
 
         User::factory()->create([
