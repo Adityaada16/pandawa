@@ -13,53 +13,31 @@ class RumahTanggaSeeder extends Seeder
      */
     public function run(): void
     {
+        $now = now();
+
         $data = [
             [
-                'id_bs'      => 1,
-                'nurt'      => 1,
-                'krt'       => 'Budi Santoso',
-                'keterangan'=> 'Keluarga petani padi',
-                'status_sinyal' => 1,
+                'id_rt'      => 1,
+                'id_bs'      => 5,
+                'nurt'       => 101,
+                'krt'        => 'Budi Santoso',
+                'keterangan' => 'Keluarga contoh pertama',
             ],
             [
-                'id_bs'      => 1,
-                'nurt'      => 2,
-                'krt'       => 'Siti Aminah',
-                'keterangan'=> 'Usaha warung kelontong',
-                'status_sinyal' => 2,
-            ],
-            [
-                'id_bs'      => 2,
-                'nurt'      => 1,
-                'krt'       => 'Joko Widodo',
-                'keterangan'=> 'Pekerja konstruksi',
-                'status_sinyal' => 1,
-            ],
-            [
-                'id_bs'      => 2,
-                'nurt'      => 2,
-                'krt'       => 'Ani Kusuma',
-                'keterangan'=> 'Guru sekolah dasar',
-                'status_sinyal' => 1,
-            ],
-            [
-                'id_bs'      => 3,
-                'nurt'      => 1,
-                'krt'       => 'Rahmat Hidayat',
-                'keterangan'=> 'Pedagang pasar',
-                'status_sinyal' => 2,
+                'id_rt'      => 2,
+                'id_bs'      => 5,
+                'nurt'       => 102,
+                'krt'        => 'Siti Aminah',
+                'keterangan' => 'Keluarga contoh kedua',
             ],
         ];
 
-        foreach ($data as $item) {
+        foreach ($data as $rt) {
             DB::table('rumah_tanggas')->updateOrInsert(
-                [
-                    'id_bs' => $item['id_bs'],
-                    'nurt'  => $item['nurt'],
-                ], // kombinasi unik id_bs + nurt
-                array_merge($item, [
-                    'updated_at' => now(),
-                    'created_at' => now(),
+                ['id_rt' => $rt['id_rt']], // kondisi unik berdasarkan primary key
+                array_merge($rt, [
+                    'updated_at' => $now,
+                    'created_at' => $now,
                 ])
             );
         }

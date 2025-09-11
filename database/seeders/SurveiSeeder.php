@@ -13,36 +13,35 @@ class SurveiSeeder extends Seeder
      */
     public function run(): void
     {
+        $now = now();
+
         $data = [
             [
-                'kode'       => 'SE2026',
-                'nama'       => 'Sensus Ekonomi 2026',
-                'deskripsi'  => 'Sensus untuk mengumpulkan data kegiatan ekonomi di seluruh Indonesia.',
-                'tahun'      => 2026,
-                'periode'    => 'Tahap Persiapan',
-                'tgl_mulai'  => '2025-01-01',
-                'tgl_selesai'=> '2026-12-31',
-                'status'     => 'draft',
+                'kode'      => 'SE2026',
+                'nama'      => 'Survei Ekonomi 2026',
+                'deskripsi' => 'Survei untuk mengumpulkan data kegiatan ekonomi di seluruh Indonesia.',
+                'tahun'     => 2026,
+                'periode'   => 'Tahap Persiapan',
+                'status'    => 'draft',
+                // 'laporan'   => 0,
             ],
             [
-                'kode'       => 'ST2025',
-                'nama'       => 'Sensus Pertanian 2025',
-                'deskripsi'  => 'Pendataan sektor pertanian meliputi tanaman pangan, hortikultura, perkebunan, peternakan, kehutanan, dan perikanan.',
-                'tahun'      => 2025,
-                'periode'    => '2025-05',
-                'tgl_mulai'  => '2025-05-01',
-                'tgl_selesai'=> '2025-05-30',
-                'status'     => 'aktif',
+                'kode'      => 'ST2023',
+                'nama'      => 'Survei Pertanian 2023',
+                'deskripsi' => 'Survei sektor pertanian meliputi tanaman pangan, hortikultura, perkebunan, peternakan, kehutanan, dan perikanan.',
+                'tahun'     => 2025,
+                'periode'   => '2025-05',
+                'status'    => 'aktif',
+                'laporan'   => 0,
             ],
             [
-                'kode'       => 'SP2020',
-                'nama'       => 'Sensus Penduduk 2020',
-                'deskripsi'  => 'Pendataan penduduk untuk memperoleh data demografi dasar.',
-                'tahun'      => 2020,
-                'periode'    => '2020-09',
-                'tgl_mulai'  => '2020-09-01',
-                'tgl_selesai'=> '2020-09-30',
-                'status'     => 'selesai',
+                'kode'      => 'SP2020',
+                'nama'      => 'Survei Penduduk 2020',
+                'deskripsi' => 'Survei penduduk untuk memperoleh data demografi dasar.',
+                'tahun'     => 2020,
+                'periode'   => '2020-09',
+                'status'    => 'selesai',
+                'laporan'   => 1,
             ],
         ];
 
@@ -50,8 +49,8 @@ class SurveiSeeder extends Seeder
             DB::table('surveis')->updateOrInsert(
                 ['kode' => $item['kode']], // key unik
                 array_merge($item, [
-                    'updated_at' => now(),
-                    'created_at' => now(),
+                    'updated_at' => $now,
+                    'created_at' => $now,
                 ])
             );
         }

@@ -16,14 +16,13 @@ class Survei extends Model
     protected $keyType = 'int';
 
     protected $fillable = [
-        'kode','nama','deskripsi','tahun','periode',
-        'tgl_mulai','tgl_selesai','status'
+        'kode','nama','deskripsi','tahun','periode','status','laporan'
     ];
 
     protected $casts = [
-        'tgl_mulai'   => 'date',
-        'tgl_selesai' => 'date'
+        'laporan' => 'boolean',
     ];
+    
 
     public function getRouteKeyName(): string
     {
@@ -41,5 +40,57 @@ class Survei extends Model
             'id_bs'                         // PK di BlokSensus
         );
     }
+
+    public function laporans() {
+        return $this->hasManyThrough(
+            Laporan::class,
+            Pertanyaan::class,
+            'id_survei',      // FK di Pertanyaan
+            'id_pertanyaan',  // FK di Laporan
+            'id_survei',
+            'id_pertanyaan'
+        );
+    }
+
+    public function pertanyaans()
+    {
+        return $this->hasMany(Pertanyaan::class, 'id_survei', 'id_survei');
+    }
     
+    // ===== Helper progress untuk 1 RT =====
+
+    public function totalPertanyaan(): int
+    {
+        return $this->pertanyaans()->count();
+    }
+
+    public function answeredCountForRt(int $idRt): int
+    {
+        return $this->laporans()
+            ->where('laporans.id_rumah_tangga', $idRt)
+            ->whereNotNull('laporans.jawaban')
+            ->count();
+    }
+
+    public function unansweredForRt(int $idRt)
+    {
+        // pertanyaan di survei ini yang belum punya jawaban (non-null) untuk RT tsb
+        return $this->pertanyaans()
+            ->whereDoesntHave('laporans', function ($q) use ($idRt) {
+                $q->where('id_rumah_tangga', $idRt)
+                  ->whereNotNull('jawaban');
+            })
+            ->get(['id_pertanyaan','label','pic']);
+    }
+
+    public function progressForRt(int $idRt): array
+    {
+        $total = $this->totalPertanyaan();
+        $answered = $this->answeredCountForRt($idRt);
+        return [
+            'answered' => $answered,
+            'total'    => $total,
+            'complete' => $total > 0 ? $answered === $total : true,
+        ];
+    }
 }

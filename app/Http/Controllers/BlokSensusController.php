@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Validators\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 
 class BlokSensusController extends Controller
@@ -28,24 +29,28 @@ class BlokSensusController extends Controller
      */
     public function store(Request $request)
     {
+        $pclId = DB::table('roles')->where('name','pcl')->value('id'); // ex: 5
+        $pmlId = DB::table('roles')->where('name','pml')->value('id'); // ex: 4
+
         $validator = Validator::make($request->all(), [
             //validasi untuk tiap atributnya
-            'id_survei'   => ['required','integer','exists:surveis,id_survei'],
+            'id_survei'     => ['required','integer','exists:surveis,id_survei'],
             'kode'          => ['required','string','size:4'],
             'id_kab_kota'   => ['required','exists:kab_kotas,id_kab_kota'],
             'kecamatan'     => ['required','string','max:50'],
             'desa'          => ['required','string','max:50'],
             'nks'           => ['required','string','max:12', 
-                                    Rule::unique('blok_sensuses','nks')->where(
-                                        fn($q) => $q->where('kode', $request->input('kode'))),],
+                                    Rule::unique('blok_sensuses','nks')
+                                        ->where(fn($q) => $q
+                                        ->where('kode', $request->input('kode'))),],
             'id_petugas_pcl'=> ['required','integer',
                                     Rule::exists('petugas','id_petugas')
-                                        ->where(fn($q) => $q->whereIn('status', ['pcl'])),
-                                    'different:id_petugas_pml',],
+                                        ->where(fn($q) => $q->where('id_role', $pclId)),
+                                'different:id_petugas_pml',],
             'id_petugas_pml'=> ['required','integer',
                                     Rule::exists('petugas','id_petugas')
-                                        ->where(fn($q) => $q->whereIn('status', ['pml'])),
-                                    'different:id_petugas_pcl',],
+                                        ->where(fn($q) => $q->where('id_role', $pmlId)),
+                                'different:id_petugas_pcl',],
         ], [
             // Pesan Kesalahan
             'id_survei.required' => 'Survei wajib diisi.',
@@ -96,7 +101,6 @@ class BlokSensusController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    
 
     /**
      * Display the specified resource.
@@ -113,23 +117,28 @@ class BlokSensusController extends Controller
     {
        // Kalau PUT => required, kalau PATCH => sometimes
         $required = $request->isMethod('put') ? 'required' : 'sometimes';
+
+        // Ambil role dinamis dari tabel roles
+        $pclId = DB::table('roles')->where('name', 'pcl')->value('id'); // ex: 5
+        $pmlId = DB::table('roles')->where('name', 'pml')->value('id'); // ex: 4
+
         $validator = Validator::make($request->all(), [
             'id_survei'   => [$required,'integer','exists:surveis,id_survei'],
             'kode'        => [$required,'string','size:4'],
             'id_kab_kota' => [$required,'integer',Rule::exists('kab_kotas','id_kab_kota')],
             'kecamatan'   => [$required,'string','max:50'], // samakan dgn ukuran kolom di DB
             'desa'        => [$required,'string','max:50'],
-            'nks'         => [$required,'string','max:12',
-                                Rule::unique('blok_sensuses','nks')
+            'nks'         => [$required,'string','max:12', 
+                                Rule::unique('blok_sensuses', 'nks')
                                     ->where(fn($q) => $q->where('kode', $request->input('kode', $blokSensus->kode)))
-                                    ->ignore($blokSensus->id, 'id'),],
+                                    ->ignore($blokSensus->id, 'id'), ],
             'id_petugas_pcl' => [$required, 'integer',
                                 Rule::exists('petugas', 'id_petugas')
-                                    ->where(fn($q) => $q->whereIn('status', ['pcl'])),
+                                    ->where(fn($q) => $q->where('id_role', $pclId)),
                                 'different:id_petugas_pml',],
             'id_petugas_pml' => [$required, 'integer',
                                 Rule::exists('petugas', 'id_petugas')
-                                    ->where(fn($q) => $q->whereIn('status', ['pml'])),
+                                    ->where(fn($q) => $q->where('id_role', $pmlId)),
                                 'different:id_petugas_pcl',],
         ], [
             // Pesan Kesalahan

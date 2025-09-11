@@ -63,4 +63,17 @@ class RumahTangga extends Model
         return $this->belongsTo(BlokSensus::class, 'id_bs', 'id_bs'); // Hubungkan ke tabel bs
     }
 
+    // 1 RT banyak Laporan
+    public function laporans()
+    {
+        return $this->hasMany(Laporan::class, 'id_rumah_tangga', 'id_rt')->with('pertanyaan');
+    }
+
+    // Laporan RT ini untuk 1 survei tertentu (dengan relasi pertanyaan)
+    public function laporansForSurvei(int $idSurvei)
+    {
+        return $this->laporans()
+            ->whereHas('pertanyaan', fn($q) => $q->where('id_survei', $idSurvei));
+    }
+
 }

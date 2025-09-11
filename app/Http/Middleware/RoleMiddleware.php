@@ -30,7 +30,7 @@ class RoleMiddleware
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak. Role Anda tidak memiliki izin untuk mengakses endpoint ini.',
-                'role' => $user->name
+                'role' => optional($user->role)->name
             ], 403);
         }
 

@@ -15,19 +15,22 @@ class RoleSeeder extends Seeder
     {
         $now = now();
 
-        DB::table('roles')->updateOrInsert(
-            ['id' => 1],
-            ['name' => 'admin_prov', 'created_at' => $now, 'updated_at' => $now]
-        );
-
-        DB::table('roles')->updateOrInsert(
-            ['id' => 2],
-            ['name' => 'admin_kabkota', 'created_at' => $now, 'updated_at' => $now]
-        );
-
-        DB::table('roles')->updateOrInsert(
-            ['id' => 3],
-            ['name' => 'user', 'created_at' => $now, 'updated_at' => $now]
-        );
+        $roles = [
+            ['id' => 1, 'name' => 'admin_prov'],
+            ['id' => 2, 'name' => 'admin_kabkota'],
+            ['id' => 3, 'name' => 'pengolahan'],
+            ['id' => 4, 'name' => 'pml'],
+            ['id' => 5, 'name' => 'pcl'],
+        ];
+        
+        foreach ($roles as $role) {
+            DB::table('roles')->updateOrInsert(
+                ['id' => $role['id']], // kondisi cek unik
+                array_merge($role, [
+                    'updated_at' => $now,
+                    'created_at' => $now,
+                ])
+            );
+        }        
     }
 }

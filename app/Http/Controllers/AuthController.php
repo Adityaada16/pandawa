@@ -6,33 +6,40 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Response;
-use App\Models\User;
+use App\Models\Petugas;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
     public function register(Request $request) 
     {
         $validator = Validator::make($request->all(), [
-            'name'        => ['required','string','max:100'],
-            'email'       => ['required','email','max:255', Rule::unique('users','email')],
-            'password'    => ['required','string','min:6','max:255'],
-            'nip_pegawai' => ['required','string','min:1','max:50', Rule::unique('users','nip_pegawai')],
+            'username'    => ['required','string','max:20', Rule::unique('petugas','username')],
+            'nama'        => ['required','string','max:50'],
+            'email'       => ['required','email','max:255', Rule::unique('petugas','email')],
+            'password'    => ['nullable','string','min:6','max:50'],
+            'fp'          => ['nullable','string','max:255'],
+            'nip_pegawai' => ['nullable','string','min:1','max:50', Rule::unique('petugas','nip_pegawai')],
+            'id_role'     => ['nullable','integer','exists:roles,id'],
         ], [
             //pesan kesalahan
-            'name.required'        => 'Nama wajib diisi.',
-            'name.max'             => 'Nama maksimal 100 karakter.',
-            'email.required'       => 'Email wajib diisi.',
-            'email.email'          => 'Format email tidak valid.',
-            'email.max'            => 'Email maksimal 255 karakter.',
-            'email.unique'         => 'Email sudah terdaftar.',
-            'password.required'    => 'Password wajib diisi.',
-            'password.min'         => 'Password minimal 6 karakter.',
-            'password.max'         => 'Password maksimal 255 karakter.',
-            'nip_pegawai.required' => 'NIP Pegawai wajib diisi.',
-            'nip_pegawai.min'      => 'NIP Pegawai minimal 1 karakter.',
-            'nip_pegawai.max'      => 'NIP Pegawai maksimal 50 karakter.',
-            'nip_pegawai.unique'   => 'NIP Pegawai sudah terdaftar.',
+           'username.required'    => 'Username wajib diisi.',
+            'username.max'        => 'Username maksimal 20 karakter.',
+            'username.unique'     => 'Username sudah digunakan.',
+            'password.max'        => 'Password maksimal 50 karakter.',
+            'password.min'        => 'Password minimal 6 karakter.',
+            'nama.required'       => 'Nama wajib diisi.',
+            'nama.max'            => 'Nama maksimal 50 karakter.',
+            'email.required'      => 'Email wajib diisi.',
+            'email.email'         => 'Format email tidak valid.',
+            'email.max'           => 'Email maksimal 255 karakter.',
+            'email.unique'        => 'Email sudah terdaftar.',
+            'nip_pegawai.min'     => 'NIP Pegawai minimal 1 karakter.',
+            'nip_pegawai.max'     => 'NIP Pegawai maksimal 50 karakter.',
+            'nip_pegawai.unique'  => 'NIP Pegawai sudah terdaftar.',
+            'fp.max'              => 'FP maksimal 255 karakter.',
+            'id_role.exists'      => 'Role tidak valid.',
         ]);
     
         if ($validator->fails()) {
@@ -43,12 +50,27 @@ class AuthController extends Controller
         }
     
         try {
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => bcrypt($request->password),
-                'nip_pegawai' => $request->nip_pegawai,
-                'id_role' => '3',
+            $data = $validator->validated();
+
+            // Default password kalau kosong
+            if (empty($data['password'])) {
+                $data['password'] = '123456';
+            }
+  
+            // Default role = 'pcl' (ambil id dari tabel roles)
+            if (empty($data['id_role'])) {
+                $defaultRoleId = DB::table('roles')->where('name','pcl')->value('id');
+                $data['id_role'] = $defaultRoleId;
+            }
+
+            $user = Petugas::create([
+                'username'    => $data['username'],
+                'nama'        => $data['nama'],
+                'email'       => $data['email'],
+                'password'    => Hash::make($data['password']),
+                'fp'          => $data['fp'] ?? null,
+                'nip_pegawai' => $data['nip_pegawai'] ?? null,
+                'id_role'     => $data['id_role'],
             ]);
     
             // Generate token
@@ -87,7 +109,7 @@ class AuthController extends Controller
     
         // Ambil kredensial hanya setelah validasi
         $credentials = $request->only('email', 'password');
-        $user = User::where('email', $credentials['email'])->first();
+        $user = Petugas::where('email', $credentials['email'])->first();
     
         // Cek keberadaan pengguna dan password
         if (!$user || !Hash::check($credentials['password'], $user->password)) {

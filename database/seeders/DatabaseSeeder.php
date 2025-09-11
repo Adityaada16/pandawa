@@ -17,16 +17,17 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             KabKotaSeeder::class,
-            UserSeeder::class,
             PetugasSeeder::class,
             SurveiSeeder::class,
             BlokSensusSeeder::class,
             RumahTanggaSeeder::class,
+            PertanyaanSeeder::class,
+            LaporanSeeder::class,
         ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
     }
 }

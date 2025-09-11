@@ -20,6 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
     })
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->use([
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
+    })    
     ->withExceptions(function (Exceptions $exceptions) {
          // Custom response untuk belum login
          $exceptions->render(function (AuthenticationException $e, Request $request) {

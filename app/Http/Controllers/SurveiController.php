@@ -24,14 +24,25 @@ class SurveiController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'kode'        => 'required|string|max:20|unique:surveis,kode',
-            'nama'        => 'required|string|max:255',
-            'deskripsi'   => 'nullable|string',
-            'tahun'       => 'required|integer|min:2000|max:2100',
-            'periode'     => 'nullable|string|max:20',
-            'tgl_mulai'   => 'nullable|date',
-            'tgl_selesai' => 'nullable|date|after_or_equal:tgl_mulai',
-            'status'      => ['nullable', Rule::in(['draft','aktif','selesai'])],
+            'kode'      => ['required','string','max:20', 'unique:surveis,kode'],
+            'nama'      => ['required','string','max:255'],
+            'deskripsi' => ['nullable','string'],
+            'tahun'     => ['required','integer'],
+            'periode'   => ['nullable','string','max:20'],
+            'status'    => ['nullable', Rule::in(['draft','aktif','selesai'])],
+            'laporan'   => ['nullable','boolean'], // 0/1, true/false, "0"/"1"
+        ], [
+            'kode.required'   => 'Kode survei wajib diisi.',
+            'kode.max'        => 'Kode survei maksimal 20 karakter.',
+            'kode.unique'     => 'Kode survei sudah terdaftar.',
+            'nama.required'   => 'Nama survei wajib diisi.',
+            'nama.max'        => 'Nama survei maksimal 255 karakter.',
+            'deskripsi.string'=> 'Deskripsi harus berupa teks.',
+            'tahun.required'  => 'Tahun survei wajib diisi.',
+            'tahun.integer'   => 'Tahun survei harus berupa angka.',
+            'periode.max'     => 'Periode maksimal 20 karakter.',
+            'status.in'       => 'Status tidak valid. Pilih salah satu: draft, aktif, selesai.',
+            'laporan.boolean' => 'Kolom laporan harus bernilai boolean (0/1).',
         ]);
     
         if ($validator->fails()) {
@@ -70,16 +81,31 @@ class SurveiController extends Controller
      */
     public function update(Request $request, Survei $survei)
     {
+        // PUT = wajib isi; PATCH = boleh kosong (nullable) — TANPA "sometimes"
+        $required = $request->isMethod('put') ? 'required' : 'nullable';
+
         $validator = Validator::make($request->all(), [
-        'kode'        => ['sometimes','string','max:20', 
-            Rule::unique('surveis','kode')->ignore($survei->id_survei, 'id_survei'),],
-        'nama'        => ['sometimes','string','max:255'],
-        'deskripsi'   => ['sometimes','nullable','string'],
-        'tahun'       => ['sometimes','integer','min:2000','max:2100'],
-        'periode'     => ['sometimes','nullable','string','max:20'],
-        'tgl_mulai'   => ['sometimes','nullable','date'],
-        'tgl_selesai' => ['sometimes','nullable','date','after_or_equal:tgl_mulai'],
-        'status'      => ['sometimes', Rule::in(['draft','aktif','selesai'])]
+            'kode'      => [$required,'string','max:20',
+                                Rule::unique('surveis','kode')
+                                    ->ignore($survei->id_survei, 'id_survei')],
+            'nama'      => [$required,'string','max:255'],
+            'deskripsi' => [$required,'string'], // boleh null saat PATCH karena rule = nullable di atas
+            'tahun'     => [$required,'integer'],
+            'periode'   => [$required,'string','max:20'],
+            'status'    => [$required, Rule::in(['draft','aktif','selesai'])],
+            'laporan'   => [$required,'boolean'],
+        ], [
+            'kode.required'   => 'Kode survei wajib diisi.',
+            'kode.max'        => 'Kode survei maksimal 20 karakter.',
+            'kode.unique'     => 'Kode survei sudah terdaftar.',
+            'nama.required'   => 'Nama survei wajib diisi.',
+            'nama.max'        => 'Nama survei maksimal 255 karakter.',
+            'deskripsi.string'=> 'Deskripsi harus berupa teks.',
+            'tahun.required'  => 'Tahun survei wajib diisi.',
+            'tahun.integer'   => 'Tahun survei harus berupa angka.',
+            'periode.max'     => 'Periode maksimal 20 karakter.',
+            'status.in'       => 'Status tidak valid. Pilih salah satu: draft, aktif, selesai.',
+            'laporan.boolean' => 'Kolom laporan harus bernilai boolean (0/1).',
         ]);
 
         if ($validator->fails()) {
