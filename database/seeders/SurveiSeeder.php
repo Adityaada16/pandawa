@@ -17,40 +17,54 @@ class SurveiSeeder extends Seeder
 
         $data = [
             [
-                'kode'      => 'SE2026',
-                'nama'      => 'Survei Ekonomi 2026',
-                'deskripsi' => 'Survei untuk mengumpulkan data kegiatan ekonomi di seluruh Indonesia.',
-                'tahun'     => 2026,
-                'periode'   => 'Tahap Persiapan',
-                'status'    => 'draft',
-                // 'laporan'   => 0,
+                'id_master_survei' => 3,
+                'nama'             => 'SE 2026 - Tahap Pendataan Usaha',
+                'tahun'            => 2026,
+                'periode'          => '2026-06',
+                'status'           => 'draft',
+                'laporan'          => false,
+                'survei_mulai'     => '2026-06-01',
+                'survei_selesai'   => '2026-06-30',
             ],
             [
-                'kode'      => 'ST2023',
-                'nama'      => 'Survei Pertanian 2023',
-                'deskripsi' => 'Survei sektor pertanian meliputi tanaman pangan, hortikultura, perkebunan, peternakan, kehutanan, dan perikanan.',
-                'tahun'     => 2025,
-                'periode'   => '2025-05',
-                'status'    => 'aktif',
-                'laporan'   => 0,
+                'id_master_survei' => 3,
+                'nama'             => 'SE 2026 - Verifikasi Lapangan',
+                'tahun'            => 2026,
+                'periode'          => '2026-08',
+                'status'           => 'aktif',
+                'laporan'          => true,
+                'survei_mulai'     => '2026-08-01',
+                'survei_selesai'   => '2026-08-31',
             ],
             [
-                'kode'      => 'SP2020',
-                'nama'      => 'Survei Penduduk 2020',
-                'deskripsi' => 'Survei penduduk untuk memperoleh data demografi dasar.',
-                'tahun'     => 2020,
-                'periode'   => '2020-09',
-                'status'    => 'selesai',
-                'laporan'   => 1,
+                'id_master_survei' => 2,
+                'nama'             => 'ST 2025 - Pendataan Utama',
+                'tahun'            => 2025,
+                'periode'          => '2025-05',
+                'status'           => 'selesai',
+                'laporan'          => true,
+                'survei_mulai'     => '2025-05-01',
+                'survei_selesai'   => '2025-05-31',
+            ],
+            [
+                'id_master_survei' => 1,
+                'nama'             => 'SUSENAS 2025 - Maret',
+                'tahun'            => 2025,
+                'periode'          => '2025-03',
+                'status'           => 'aktif',
+                'laporan'          => false,
+                'survei_mulai'     => '2025-03-01',
+                'survei_selesai'   => '2025-03-31',
             ],
         ];
 
-        foreach ($data as $item) {
+        foreach ($data as $row) {
+            // kunci unik pakai (nama, tahun) agar idempotent
             DB::table('surveis')->updateOrInsert(
-                ['kode' => $item['kode']], // key unik
-                array_merge($item, [
-                    'updated_at' => $now,
+                ['nama' => $row['nama'], 'tahun' => $row['tahun']],
+                array_merge($row, [
                     'created_at' => $now,
+                    'updated_at' => $now,
                 ])
             );
         }

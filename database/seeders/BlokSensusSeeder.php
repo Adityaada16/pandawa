@@ -15,6 +15,8 @@ class BlokSensusSeeder extends Seeder
     {
         $data = [
             [
+                'id_survei' => 1,
+                'sls'       => 'SLS 001',
                 'kode'          => 'BS01',
                 'kecamatan'     => 'Kecamatan A',
                 'desa'          => 'Desa Alpha',
@@ -25,6 +27,8 @@ class BlokSensusSeeder extends Seeder
                 'id_survei'     => 1,
             ],
             [
+                'id_survei' => 2,
+                'sls'       => 'SLS 002',
                 'kode'          => 'BS02',
                 'kecamatan'     => 'Kecamatan B',
                 'desa'          => 'Desa Beta',
@@ -35,6 +39,8 @@ class BlokSensusSeeder extends Seeder
                 'id_survei'     => 1,
             ],
             [
+                'id_survei' => 3,
+                'sls'       => 'SLS 003',
                 'kode'          => 'BS03',
                 'kecamatan'     => 'Kecamatan C',
                 'desa'          => 'Desa Gamma',
@@ -45,6 +51,8 @@ class BlokSensusSeeder extends Seeder
                 'id_survei'     => 2,
             ],
             [
+                'id_survei' => 1,
+                'sls'       => 'SLS 004',
                 'kode'          => 'BS04',
                 'kecamatan'     => 'Kecamatan D',
                 'desa'          => 'Desa Delta',
@@ -55,6 +63,8 @@ class BlokSensusSeeder extends Seeder
                 'id_survei'     => 2,
             ],
             [
+                'id_survei' => 2,
+                'sls'       => 'SLS 005',
                 'kode'          => 'BS05',
                 'kecamatan'     => 'Kecamatan E',
                 'desa'          => 'Desa Epsilon',
@@ -71,7 +81,7 @@ class BlokSensusSeeder extends Seeder
                 [
                     'kode' => $item['kode'],
                     'nks'  => $item['nks'],
-                ], // kombinasi unik kode + nks
+                ],
                 array_merge($item, [
                     'updated_at' => now(),
                     'created_at' => now(),

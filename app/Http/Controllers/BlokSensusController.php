@@ -43,6 +43,7 @@ class BlokSensusController extends Controller
                                     Rule::unique('blok_sensuses','nks')
                                         ->where(fn($q) => $q
                                         ->where('kode', $request->input('kode'))),],
+            'sls'           => ['nullable','string','max:50'],
             'id_petugas_pcl'=> ['required','integer',
                                     Rule::exists('petugas','id_petugas')
                                         ->where(fn($q) => $q->where('id_role', $pclId)),
@@ -68,6 +69,7 @@ class BlokSensusController extends Controller
             'nks.required'         => 'NKS wajib diisi.',
             'nks.max'              => 'NKS maksimal 12 karakter.',
             'nks.unique'           => 'NKS sudah digunakan untuk KODE tersebut.',
+            'sls.max'              => 'SLS maksimal 50 karakter.',
             'id_petugas_pcl.required'  => 'ID Petugas PCL wajib diisi.',
             'id_petugas_pcl.integer'   => 'ID Petugas PCL harus berupa angka.',
             'id_petugas_pcl.exists'    => 'Petugas PCL tidak valid atau statusnya bukan PCL.',
@@ -131,7 +133,8 @@ class BlokSensusController extends Controller
             'nks'         => [$required,'string','max:12', 
                                 Rule::unique('blok_sensuses', 'nks')
                                     ->where(fn($q) => $q->where('kode', $request->input('kode', $blokSensus->kode)))
-                                    ->ignore($blokSensus->id, 'id'), ],
+                                    ->ignore($blokSensus->id_bs, 'id_bs'), ],
+            'sls'         => [$required,'string','max:50'],
             'id_petugas_pcl' => [$required, 'integer',
                                 Rule::exists('petugas', 'id_petugas')
                                     ->where(fn($q) => $q->where('id_role', $pclId)),
@@ -156,6 +159,7 @@ class BlokSensusController extends Controller
             'nks.required'         => 'NKS wajib diisi.',
             'nks.max'              => 'NKS maksimal 12 karakter.',
             'nks.unique'           => 'NKS sudah digunakan untuk KODE tersebut.',
+            'sls.max'            => 'SLS maksimal 50 karakter.',
             'id_petugas_pcl.required'  => 'ID Petugas PCL wajib diisi.',
             'id_petugas_pcl.integer'   => 'ID Petugas PCL harus berupa angka.',
             'id_petugas_pcl.exists'    => 'Petugas PCL tidak valid atau statusnya bukan PCL.',
@@ -172,9 +176,29 @@ class BlokSensusController extends Controller
                 'message' => $validator->errors(),
             ], Response::HTTP_BAD_REQUEST);
         }
+
+        // Cek apakah ada data yang benar-benar diubah
+        $data = $validator->validated();
     
+        $changes = false;
+        foreach ($data as $key => $value) {
+            if ($blokSensus->$key !== $value) {
+                $changes = true;
+                break;
+            }
+        }
+
+        // Jika tidak ada perubahan
+        if (!$changes) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Tidak ada perubahan data untuk diupdate.',
+            ]   
+            , Response::HTTP_BAD_REQUEST);
+        }
+
         try {
-            $data = $validator->validated();
+            // $data = $validator->validated();
             $blokSensus->update($data);
     
             return response()->json([
@@ -240,6 +264,6 @@ class BlokSensusController extends Controller
     public function destroy(BlokSensus $blokSensus)
     {
         $blokSensus->delete();
-        return ['message' => 'data blok sensus dihapus'];
+        return ['message' => 'data blok sensus berhasil dihapus'];
     }
 }

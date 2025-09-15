@@ -3,83 +3,91 @@
 namespace App\Imports;
 
 use App\Models\Petugas;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\ToModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 
-class PetugasImport implements ToCollection, ToModel, WithValidation, WithStartRow
+class PetugasImport implements ToModel, WithValidation, WithStartRow, SkipsEmptyRows, WithUpserts
 {
-    // private $current = 0;
     protected array $roleIdByName = [];
-    /**
-    * @param Collection $collection
-    */
-    public function collection(Collection $collection)
-    {
-        //
-    }
 
     public function startRow(): int
     {
-        return 2; // baris 1 = header, validasi & model mulai baris 2
+        return 2; // baris 1 = header
+    }
+
+    private function toString($value): ?string
+    {
+        if ($value === null || $value === '') return null;
+        return trim((string)$value);
     }
 
     public function model(array $row)
     {
-        // $this->current++;
-        // if ($this->current === 1) {
-        //     // baris pertama header
-        //     return null;
-        // }
-
         // Default role 'pcl'
         $defaultRoleId = (int) DB::table('roles')->where('name', 'pcl')->value('id');
 
-        // Cegah duplikasi by email
-        $email = isset($row[5]) ? strtolower(trim((string)$row[5])) : null;
-        if (!$email || Petugas::where('email', $email)->exists()) {
-            return null;
-        }
+        // Kolom: 0=username, 1=password, 2=nama, 3=nip_pegawai, 4=fp, 5=email, 6=role_name
+        $username    = $this->toString($row[0] ?? null);
+        $passwordRaw = $this->toString($row[1] ?? null);
+        $nama        = $this->toString($row[2] ?? null);
+        $nipPegawai  = $this->toString($row[3] ?? null);
+        $fp          = $this->toString($row[4] ?? null);
+        $email       = strtolower((string)($this->toString($row[5] ?? null)));
+        $roleName    = $this->toString($row[6] ?? null);
 
-        // Index: 0=username, 1=password, 2=nama, 3=nip_pegawai, 4=fp, 5=email, 6=role (by nama)
-        $username    = isset($row[0]) ? trim((string)$row[0]) : null;
-        $passwordRaw = isset($row[1]) ? (string)$row[1] : '';
-        $nama        = isset($row[2]) ? trim((string)$row[2]) : null;
-        $nipPegawai  = isset($row[3]) && $row[3] !== '' ? trim((string)$row[3]) : null;
-        $fp          = isset($row[4]) && $row[4] !== '' ? trim((string)$row[4]) : null;
-        $roleName    = isset($row[6]) ? strtolower(trim((string)$row[6])) : '';
+        $idRole = $this->resolveRoleIdByName($roleName ?: '', $defaultRoleId);
 
-        // Resolve role name -> id
-        $idRole = $this->resolveRoleIdByName($roleName, $defaultRoleId);
+        $now = now();
 
         $petugas = new Petugas;
         $petugas->username    = $username;
-        $petugas->password    = Hash::make($passwordRaw !== '' ? $passwordRaw : '123456');
+        $petugas->password    = Hash::make($passwordRaw ?: '123456');
         $petugas->nama        = $nama;
-        $petugas->nip_pegawai = $nipPegawai ?: null;
-        $petugas->fp          = $fp ?: null;
-        $petugas->email       = $email;
+        $petugas->nip_pegawai = $nipPegawai;
+        $petugas->fp          = $fp;
+        $petugas->email       = $email;    
         $petugas->id_role     = $idRole;
+        $petugas->created_at  = $now;       
+        $petugas->updated_at  = $now;       
 
-        $petugas->save();
-        return null;
+        return $petugas;
+    }
+
+    /** Upsert berdasarkan email (harus ada unique index email di DB) */
+    public function uniqueBy()
+    {
+        return 'email';
+    }
+
+    /** Kolom yang di-update ketika ada konflik email */
+    public function upsertColumns()
+    {
+        return [
+            'username',
+            'password',
+            'nama',
+            'nip_pegawai',
+            'fp',
+            'id_role',
+            'updated_at',
+        ];
     }
 
     public function rules(): array
     {
         return [
-            '0' => ['required','string','max:20', Rule::unique('petugas','username')], // username
-            '1' => ['nullable','string','min:6','max:50'],                              // password
-            '2' => ['required','string','max:50'],                                      // nama
-            '3' => ['nullable','min:1','max:50', Rule::unique('petugas','nip_pegawai')], // nip_pegawai
-            '4' => ['nullable','string','max:255'],                                     // fp
-            '5' => ['required','email','max:255', Rule::unique('petugas','email')],     // email
-            '6' => ['nullable','string','max:50', Rule::exists('roles','name')],
+            '0' => ['required','max:20'],          // username 
+            '1' => ['nullable','min:6','max:50'],  // password
+            '2' => ['required','max:50'],          // nama
+            '3' => ['nullable','max:50'],          // nip_pegawai 
+            '4' => ['nullable','max:255'],         // fp
+            '5' => ['required','email','max:255'], // email 
+            '6' => ['nullable','max:50'],          // role (nama role)
         ];
     }
 
@@ -88,7 +96,6 @@ class PetugasImport implements ToCollection, ToModel, WithValidation, WithStartR
         return [
             '0.required' => 'Username wajib diisi.',
             '0.max'      => 'Username maksimal 20 karakter.',
-            '0.unique'   => 'Username sudah digunakan.',
 
             '1.min'      => 'Password minimal 6 karakter.',
             '1.max'      => 'Password maksimal 50 karakter.',
@@ -96,30 +103,19 @@ class PetugasImport implements ToCollection, ToModel, WithValidation, WithStartR
             '2.required' => 'Nama wajib diisi.',
             '2.max'      => 'Nama maksimal 50 karakter.',
 
-            '3.min'      => 'NIP Pegawai minimal 1 karakter.',
             '3.max'      => 'NIP Pegawai maksimal 50 karakter.',
-            '3.unique'   => 'NIP Pegawai sudah terdaftar.',
 
             '4.max'      => 'FP maksimal 255 karakter.',
 
             '5.required' => 'Email wajib diisi.',
             '5.email'    => 'Format email tidak valid.',
             '5.max'      => 'Email maksimal 255 karakter.',
-            '5.unique'   => 'Email sudah terdaftar.',
 
-            '6.required' => 'Nama role wajib diisi.',
-            '6.exists'   => 'Nama role tidak ditemukan di tabel roles.',
+            '6.max'      => 'Nama role maksimal 50 karakter.',
         ];
     }
 
-    public function uniqueBy() 
-    { 
-        return 'email';
-    }
-
-    /**
-     * Resolve roles.name -> roles.id (pakai cache), fallback ke default.
-     */
+    /** roles.name -> roles.id (cache) */
     protected function resolveRoleIdByName(string $roleName, int $defaultRoleId): int
     {
         $name = strtolower(trim($roleName));
@@ -128,7 +124,8 @@ class PetugasImport implements ToCollection, ToModel, WithValidation, WithStartR
         }
 
         if (!array_key_exists($name, $this->roleIdByName)) {
-            $this->roleIdByName[$name] = (int) (DB::table('roles')->where('name', $name)->value('id') ?? 0);
+            $roleId = DB::table('roles')->where('name', $name)->value('id');
+            $this->roleIdByName[$name] = $roleId ? (int) $roleId : 0;
         }
 
         return $this->roleIdByName[$name] ?: $defaultRoleId;

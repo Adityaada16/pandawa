@@ -8,6 +8,7 @@ use App\Http\Controllers\SurveiController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\PertanyaanController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\MasterSurveiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -15,17 +16,25 @@ use Illuminate\Support\Facades\Storage;
 // -------- Public (tanpa token) --------
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
-Route::get('/ping', fn () => response()->json([
-    'ok' => true,
-    'app' => config('app.name'),
-    'time' => now()->toDateTimeString(),
-]));
 
 // -------- Protected (butuh token Sanctum) --------
 Route::middleware(['auth:sanctum'])->group(function () {
     // Info user & logout → semua role
     Route::get('/user', fn (Request $r) => $r->user())->middleware('role:1,2,3,4,5');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('role:1,2,3,4,5');
+
+    // ===== MASTER SURVEI =====
+    // READ
+    Route::apiResource('master_survei', MasterSurveiController::class)
+    ->only(['index','show'])
+    ->middleware('role:1,2,3,4,5')
+    ->parameters(['master_survei' => 'master_survei']);
+
+    // WRITE
+    Route::apiResource('master_survei', MasterSurveiController::class)
+    ->except(['index','show'])
+    ->middleware('role:1') // admin_prov saja
+    ->parameters(['master_survei' => 'master_survei']);
 
     // ===== SURVEI =====
     // READ
@@ -37,7 +46,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // WRITE
     Route::apiResource('survei', SurveiController::class)
         ->except(['index','show'])
-        ->middleware('role:1') // admin_prov saja (ubah jika perlu)
+        ->middleware('role:1') // admin_prov saja
         ->parameters(['survei' => 'survei']);
 
     // ===== PETUGAS =====
@@ -77,13 +86,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // ===== RUMAH TANGGA =====
     // READ
     Route::apiResource('rumah_tangga', RumahTanggaController::class)
-        ->only(['index','show'])
-        ->middleware('role:1,2,3,4,5')
-        ->parameters(['rumah_tangga' => 'rumah_tangga']);
-
-    // WRITE (kalau mau batasi, ganti ke role:1,2)
-    Route::apiResource('rumah_tangga', RumahTanggaController::class)
-        ->except(['index','show'])
         ->middleware('role:1,2,3,4,5')
         ->parameters(['rumah_tangga' => 'rumah_tangga']);
 

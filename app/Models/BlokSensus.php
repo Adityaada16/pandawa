@@ -19,7 +19,8 @@ class BlokSensus extends Model
         'id_kab_kota',     
         'kecamatan',
         'desa',
-        'nks',  
+        'nks',
+        'sls',  
         'id_petugas_pcl',
         'id_petugas_pml',   
     ];

@@ -24,10 +24,17 @@ class RumahTanggaController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id_bs'      => ['required','integer',
-                                Rule::exists('blok_sensuses','id'),
-                                Rule::unique('rumah_tanggas','id_bs')], // unik per BS
-            'nurt'       => ['required','integer'],
+            'id_bs' => [
+                'required', 'integer',
+                Rule::exists('blok_sensuses', 'id_bs'),
+            ],
+            'nurt' => [
+                'required', 'integer',
+                // unik komposit: (id_bs, nurt)
+                Rule::unique('rumah_tanggas')->where(fn($q) =>
+                    $q->where('id_bs', $request->input('id_bs'))
+                ),
+            ],
             'krt'        => ['required','string','max:50'],
             'keterangan' => ['nullable','string'],
             'waktu_mulai'   => ['nullable','date'],
@@ -113,39 +120,46 @@ class RumahTanggaController extends Controller
         // Kalau PUT => required, kalau PATCH => sometimes
         $required = $request->isMethod('put') ? 'required' : 'sometimes';
         $validator = Validator::make($request->all(), [
-            'id_bs'      => [$request,'integer',
-                                Rule::exists('blok_sensuses','id'),
-                                Rule::unique('rumah_tanggas','id_bs')->ignore($rumahTangga->id, 'id')],
-            'nurt'       => [$request,'integer'],
-            'krt'        => [$request,'string','max:50'],
-            'keterangan' => [$request,'string'],
-            'waktu_mulai'   => [$request,'date'],
-            'waktu_selesai' => [$request,'date','after_or_equal:waktu_mulai'],
-            'ladt'      => [$request,'string'],
-            'longt'     => [$request,'string'],
-            'ladt_pml'  => [$request,'string'],
-            'longt_pml' => [$request,'string'],
-            'status_proses_pengawasan' => [$request,'integer'],
-            'waktu_pengawasan'         => [$request,'date'],
-            'cacah1' => [$request,'string','max:5'],
-            'cacah2' => [$request,'string','max:5'],
-            'periksa1'  => [$request,'string','max:5'],
-            'periksa2'  => [$request,'string','max:5'],
-            'periksa3'  => [$request,'string','max:5'],
-            'periksa4'  => [$request,'string','max:5'],
-            'periksa5'  => [$request,'string','max:5'],
-            'periksa6'  => [$request,'string','max:5'],
-            'periksa7'  => [$request,'string','max:5'],
-            'periksa8'  => [$request,'string','max:5'],
-            'periksa9'  => [$request,'string','max:5'],
-            'periksa10' => [$request,'string','max:5'],
-            'periksa11' => [$request,'string','max:5'],
-            'periksa12' => [$request,'string','max:5'],
-            'periksa13' => [$request,'string','max:5'],
-            'periksa14' => [$request,'string','max:5'],
-            'periksa15' => [$request,'string','max:5'],
-            'kirim1' => [$request,'string','max:5'],
-            'kirim2' => [$request,'string','max:5'],
+            'id_bs' => [
+            $required, 'integer',
+            Rule::exists('blok_sensuses', 'id_bs'),
+        ],
+        'nurt' => [
+            $required, 'integer',
+            // unik komposit (id_bs, nurt), abaikan baris saat ini dengan PK id_rt
+            Rule::unique('rumah_tanggas')->where(fn($q) =>
+                $q->where('id_bs', $request->input('id_bs', $rumahTangga->id_bs))
+            )->ignore($rumahTangga->id_rt, 'id_rt'),
+        ],
+            'krt'        => [$required,'string','max:50'],
+            'keterangan' => ['nullable','string'],
+            'waktu_mulai'   => ['nullable','date'],
+            'waktu_selesai' => ['nullable','date','after_or_equal:waktu_mulai'],
+            'ladt'      => ['nullable','string'],
+            'longt'     => ['nullable','string'],
+            'ladt_pml'  => ['nullable','string'],
+            'longt_pml' => ['nullable','string'],
+            'status_proses_pengawasan' => ['nullable','integer'],
+            'waktu_pengawasan'         => ['nullable','date'],
+            'cacah1' => ['nullable','string','max:5'],
+            'cacah2' => ['nullable','string','max:5'],
+            'periksa1'  => ['nullable','string','max:5'],
+            'periksa2'  => ['nullable','string','max:5'],
+            'periksa3'  => ['nullable','string','max:5'],
+            'periksa4'  => ['nullable','string','max:5'],
+            'periksa5'  => ['nullable','string','max:5'],
+            'periksa6'  => ['nullable','string','max:5'],
+            'periksa7'  => ['nullable','string','max:5'],
+            'periksa8'  => ['nullable','string','max:5'],
+            'periksa9'  => ['nullable','string','max:5'],
+            'periksa10' => ['nullable','string','max:5'],
+            'periksa11' => ['nullable','string','max:5'],
+            'periksa12' => ['nullable','string','max:5'],
+            'periksa13' => ['nullable','string','max:5'],
+            'periksa14' => ['nullable','string','max:5'],
+            'periksa15' => ['nullable','string','max:5'],
+            'kirim1' => ['nullable','string','max:5'],
+            'kirim2' => ['nullable','string','max:5'],
         ], [
             'id_bs.required' => 'Blok Sensus (ID) wajib diisi.',
             'id_bs.integer'  => 'Blok Sensus harus berupa ID angka.',
@@ -168,8 +182,28 @@ class RumahTanggaController extends Controller
             ], Response::HTTP_BAD_REQUEST);
         }
     
+        // Cek apakah ada data yang benar-benar diubah
+        $data = $validator->validated();
+    
+        $changes = false;
+        foreach ($data as $key => $value) {
+            if ($rumahTangga->$key !== $value) {
+                $changes = true;
+                break;
+            }
+        }
+
+        // Jika tidak ada perubahan
+        if (!$changes) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Tidak ada perubahan data untuk diupdate.',
+            ]   
+            , Response::HTTP_BAD_REQUEST);
+        }
+
         try {
-            $data = $validator->validated();
+            // $data = $validator->validated();
     
             $rumahTangga->update($data);
     

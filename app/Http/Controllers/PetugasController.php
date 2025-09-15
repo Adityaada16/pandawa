@@ -95,7 +95,7 @@ class PetugasController extends Controller
             'username'      => [$required,'string','max:20',
                                     Rule::unique('petugas','username')
                                         ->ignore($petugas->id_petugas, 'id_petugas'),],
-            'password'      => [$required,'nullable','string','max:50','min:6'],
+            'password'      => ['sometimes','nullable','string','max:50','min:6'],
             'nama'          => [$required,'string','max:50'],
             'fp'            => [$required,'nullable','string','max:255'],
             'email'         => [$required,'email','max:255',
@@ -131,9 +131,29 @@ class PetugasController extends Controller
                 'message' => $validator->errors(),
             ], Response::HTTP_BAD_REQUEST);
         }
+
+        // Cek apakah ada data yang benar-benar diubah
+        $data = $validator->validated();
+    
+        $changes = false;
+        foreach ($data as $key => $value) {
+            if ($petugas->$key !== $value) {
+                $changes = true;
+                break;
+            }
+        }
+
+        // Jika tidak ada perubahan
+        if (!$changes) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Tidak ada perubahan data untuk diupdate.',
+            ]   
+            , Response::HTTP_BAD_REQUEST);
+        }
     
         try {
-            $data = $validator->validated();
+            // $data = $validator->validated();
     
             // kalau password tidak dikirim atau string kosong tidak di update
             if (!array_key_exists('password', $data) || $data['password'] === null || $data['password'] === '') {

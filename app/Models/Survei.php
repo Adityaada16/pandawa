@@ -15,12 +15,13 @@ class Survei extends Model
     public $incrementing = true;
     protected $keyType = 'int';
 
-    protected $fillable = [
-        'kode','nama','deskripsi','tahun','periode','status','laporan'
-    ];
+    protected $fillable = ['id_master_survei','nama','tahun','periode','status',
+    'laporan','survei_mulai','survei_selesai'];
 
     protected $casts = [
         'laporan' => 'boolean',
+        'survei_mulai'  => 'date',
+        'survei_selesai'=> 'date',
     ];
     
 
@@ -57,6 +58,11 @@ class Survei extends Model
         return $this->hasMany(Pertanyaan::class, 'id_survei', 'id_survei');
     }
     
+    public function masterSurvei()
+    {
+        return $this->belongsTo(MasterSurvei::class, 'id_master_survei', 'id_master_survei');
+    }
+
     // ===== Helper progress untuk 1 RT =====
 
     public function totalPertanyaan(): int
